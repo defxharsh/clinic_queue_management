@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinic Q— | Smart Queue System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div id="authScreen">
+  <div class="auth-wrap">
+
+    <!-- LEFT PANEL -->
+    <div class="auth-left">
+      <div class="auth-logo">Clinic <span>Q—</span></div>
+      <div class="auth-tagline">intelligent queue · role-based access</div>
+      <div class="auth-feature">
+        <div class="auth-fi">🏥</div>
+        <div class="auth-ft"><p>Smart Queue Management</p><small>Reduce waiting times automatically</small></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-fi">👤</div>
+        <div class="auth-ft"><p>3 Role-Based Dashboards</p><small>Patient · Nurse · Doctor portals</small></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-fi">🚨</div>
+        <div class="auth-ft"><p>Priority Triaging</p><small>High-priority cases moved to front instantly</small></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-fi">🔐</div>
+        <div class="auth-ft"><p>Secure Account Recovery</p><small>Forgot password via security question</small></div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="auth-right">
+
+      <!-- Tab Switcher -->
+      <div class="auth-tab-row">
+        <button class="auth-tab active" id="tabLogin"    onclick="showAuthTab('login')">Sign In</button>
+        <button class="auth-tab"        id="tabRegister" onclick="showAuthTab('register')">Register</button>
+      </div>
+
+      <!-- ══════════ LOGIN PANEL ══════════ -->
+      <div id="loginPanel">
+        <h2>Welcome back</h2>
+        <p>Sign in as staff or patient</p>
+
+        <div class="inp-group">
+          <label>Email / Username</label>
+          <input type="text" id="loginUser" placeholder="your@gmail.com or nurse / doctor" autocomplete="off">
+        </div>
+        <div class="inp-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="Enter password">
+        </div>
+
+        <div class="forgot-link">
+          <a href="#" onclick="showAuthTab('forgot')">Forgot password?</a>
+        </div>
+
+        <div class="auth-err" id="loginErr"></div>
+        <button class="btn-teal" id="staffLoginBtn">Sign In →</button>
+        <div class="divider-or">or</div>
+        <button class="btn-ghost" id="patientGuestBtn">Continue as Guest Patient</button>
+
+        <div class="hint-box">
+          Staff demo credentials:<br>
+          🩺 Nurse: <strong>nurse</strong> / <strong>nurse123</strong><br>
+          👨‍⚕️ Doctor: <strong>doctor</strong> / <strong>doctor123</strong><br>
+          <span style="opacity:0.6;">Patients: register with your email ↑</span>
+        </div>
+      </div>
+
+      <!-- ══════════ REGISTER PANEL ══════════ -->
+      <div id="registerPanel" class="hidden">
+        <h2>Create account</h2>
+        <p>Register as a patient</p>
+
+        <div class="inp-group">
+          <label>Full Name</label>
+          <input type="text" id="regName" placeholder="Your full name">
+        </div>
+        <div class="inp-group">
+          <label>Email Address</label>
+          <input type="email" id="regEmail" placeholder="yourname@gmail.com">
+          <small class="inp-hint">Used for login & booking confirmations</small>
+        </div>
+        <div class="inp-group">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Min 6 characters">
+        </div>
+        <div class="inp-group">
+          <label>Confirm Password</label>
+          <input type="password" id="regPass2" placeholder="Repeat your password">
+        </div>
+
+        <!-- Security Question Section -->
+        <div class="sec-q-box">
+          <div class="sec-q-title">🔐 Account Recovery</div>
+          <div class="sec-q-sub">This will be used if you forget your password</div>
+          <div class="inp-group" style="margin-top:12px;">
+            <label>Security Question</label>
+            <select id="regSecQ">
+              <option value="">-- Select a question --</option>
+            </select>
+          </div>
+          <div class="inp-group">
+            <label>Your Answer</label>
+            <input type="text" id="regSecAns" placeholder="Type your answer (case-insensitive)">
+            <small class="inp-hint">Remember this answer — you'll need it to reset your password</small>
+          </div>
+        </div>
+
+        <div class="auth-err" id="regErr"></div>
+        <button class="btn-teal" id="registerBtn">Create Account →</button>
+        <p style="text-align:center;margin-top:12px;font-size:0.78rem;color:rgba(255,255,255,0.35);">
+          Already registered? <a href="#" onclick="showAuthTab('login')" style="color:#14b8a6;">Sign in</a>
+        </p>
+      </div>
+
+      <!-- ══════════ FORGOT PASSWORD PANEL ══════════ -->
+      <div id="forgotPanel" class="hidden">
+        <div style="margin-bottom:18px;">
+          <a href="#" onclick="showAuthTab('login')" class="back-link">← Back to sign in</a>
+        </div>
+        <h2>Forgot Password</h2>
+
+        <!-- Step Progress Dots -->
+        <div class="fp-steps">
+          <div class="fp-step-item">
+            <div class="fp-dot active" id="fpDot1">1</div>
+            <div class="fp-step-label">Email</div>
+          </div>
+          <div class="fp-step-line"></div>
+          <div class="fp-step-item">
+            <div class="fp-dot" id="fpDot2">2</div>
+            <div class="fp-step-label">Verify</div>
+          </div>
+          <div class="fp-step-line"></div>
+          <div class="fp-step-item">
+            <div class="fp-dot" id="fpDot3">3</div>
+            <div class="fp-step-label">Reset</div>
+          </div>
+        </div>
+
+        <!-- Shared error -->
+        <div class="auth-err" id="fpErr"></div>
+
+        <!-- Step 1: Enter Email -->
+        <div id="fpStep1">
+          <p>Enter your registered email to find your account.</p>
+          <div class="inp-group">
+            <label>Registered Email</label>
+            <input type="email" id="fpEmail" placeholder="yourname@gmail.com">
+          </div>
+          <button class="btn-teal" id="fpStep1Btn">Find My Account →</button>
+        </div>
+
+        <!-- Step 2: Answer Security Question -->
+        <div id="fpStep2" class="hidden">
+          <p>Answer your security question to verify your identity.</p>
+          <div class="fp-question-card">
+            <div class="fp-q-label">Your security question:</div>
+            <div class="fp-q-text" id="fpQuestionText">Loading...</div>
+          </div>
+          <div class="inp-group">
+            <label>Your Answer</label>
+            <input type="text" id="fpSecAns" placeholder="Type your answer">
+            <small class="inp-hint">Answer is not case-sensitive</small>
+          </div>
+          <button class="btn-teal" id="fpStep2Btn">Verify Answer →</button>
+          <p style="text-align:center;margin-top:10px;font-size:0.78rem;color:rgba(255,255,255,0.35);">
+            Wrong email? <a href="#" onclick="showForgotStep(1)" style="color:#14b8a6;">Go back</a>
+          </p>
+        </div>
+
+        <!-- Step 3: Set New Password -->
+        <div id="fpStep3" class="hidden">
+          <p>Almost done! Set your new password below.</p>
+          <div class="inp-group">
+            <label>New Password</label>
+            <input type="password" id="fpNewPass" placeholder="Min 6 characters">
+          </div>
+          <div class="inp-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="fpNewPass2" placeholder="Repeat new password">
+          </div>
+          <button class="btn-teal" id="fpStep3Btn">Reset Password ✓</button>
+        </div>
+
+      </div><!-- /forgotPanel -->
+
+    </div><!-- /auth-right -->
+  </div><!-- /auth-wrap -->
+</div><!-- /authScreen -->
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="mainApp" class="hidden">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">Clinic <span>Q—</span></div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="role-pill" id="rolePill">Patient</div>
+      <span id="topbarUser" style="font-size:0.8rem;color:var(--muted);"></span>
+      <button class="btn-exit" id="exitBtn">← Exit</button>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- ===== PATIENT DASHBOARD ===== -->
+    <div id="dPatient" class="hidden">
+      <div class="stats-row">
+        <div class="scard at"><div class="sl">Total in queue</div><div class="sv" id="ps_total">0</div><div class="ss">all doctors</div></div>
+        <div class="scard ar"><div class="sl">High priority</div><div class="sv" id="ps_high">0</div><div class="ss">urgent cases</div></div>
+        <div class="scard ag"><div class="sl">Doctors available</div><div class="sv" id="ps_avail">0</div><div class="ss">with open slots</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title"><div class="cicon ci-teal">📋</div>Book an Appointment</div>
+        </div>
+        <div class="fgrid">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="pName" placeholder="Your full name">
+          </div>
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="pEmail" placeholder="yourname@gmail.com">
+          </div>
+          <div class="field ffull">
+            <label>Symptoms / Reason for visit</label>
+            <textarea id="pSym" placeholder="Describe your symptoms or reason for visiting..."></textarea>
+          </div>
+          <div class="field">
+            <label>Select Doctor</label>
+            <select id="pDoc"><option value="">-- Choose a doctor --</option></select>
+          </div>
+          <div class="field">
+            <label>Doctor Status</label>
+            <div id="pDocStatus" class="status-box">Select a doctor to see availability</div>
+          </div>
+          <div class="field">
+            <label>Priority Level</label>
+            <select id="pPriority">
+              <option value="Normal">Normal</option>
+              <option value="High">🔴 High Priority (Urgent)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Email Notification</label>
+            <div class="wa-toggle">
+              <input type="checkbox" id="emailToggle" checked>
+              <label for="emailToggle">Send booking confirmation to my email</label>
+            </div>
+          </div>
+        </div>
+        <button class="btn-sub" id="bookBtn">Confirm Appointment ✓</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:22px;"><div class="cicon ci-blue">👨‍⚕️</div>Doctor Availability</div>
+        <div class="doc-grid" id="pDocGrid"></div>
+      </div>
+    </div>
+
+    <!-- ===== NURSE DASHBOARD ===== -->
+    <div id="dNurse" class="hidden">
+      <div class="stats-row">
+        <div class="scard at"><div class="sl">Waiting</div><div class="sv" id="ns_wait">0</div><div class="ss">in queue</div></div>
+        <div class="scard ar"><div class="sl">High priority</div><div class="sv" id="ns_high">0</div><div class="ss">urgent</div></div>
+        <div class="scard aa"><div class="sl">Admitted today</div><div class="sv" id="ns_admit">0</div><div class="ss">patients seen</div></div>
+        <div class="scard ag"><div class="sl">Est. avg wait</div><div class="sv" id="ns_avg">—</div><div class="ss">minutes</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title"><div class="cicon ci-amber">🩺</div>Active Queue</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Patient</th><th>Doctor</th><th>Priority</th><th>Symptoms</th><th>Time</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="nQBody"></tbody>
+          </table>
+        </div>
+        <div id="nEmpty" class="empty hidden">
+          <div class="ei">✅</div><h3>Queue is empty</h3><p>All patients attended.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:22px;"><div class="cicon ci-teal">📊</div>Doctor Load</div>
+        <div class="doc-grid" id="nDocLoad"></div>
+      </div>
+    </div>
+
+    <!-- ===== DOCTOR DASHBOARD ===== -->
+    <div id="dDoctor" class="hidden">
+      <div class="stats-row">
+        <div class="scard at"><div class="sl">Treated today</div><div class="sv" id="ds_treated">0</div><div class="ss">patients</div></div>
+        <div class="scard aa"><div class="sl">Follow-ups</div><div class="sv" id="ds_fu">0</div><div class="ss">scheduled</div></div>
+        <div class="scard ag"><div class="sl">Archived</div><div class="sv" id="ds_arch">0</div><div class="ss">records</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:22px;"><div class="cicon ci-blue">📂</div>Patient Records</div>
+        <div class="tab-row">
+          <button class="tab-btn active" id="th" onclick="docTab('h')">Patient History</button>
+          <button class="tab-btn"        id="tf" onclick="docTab('f')">Follow-ups</button>
+        </div>
+        <div id="ph">
+          <div class="field" style="max-width:400px;margin-bottom:18px;">
+            <label>Select Treated Patient</label>
+            <select id="dHistSel" onchange="loadHist()"><option value="">-- Select patient --</option></select>
+          </div>
+          <div id="dDetail" class="detail-panel hidden">
+            <div id="dContent"></div>
+            <div class="fu-schedule-box">
+              <div class="fgrid" style="margin-bottom:14px;">
+                <div class="field"><label>Follow-up Date</label><input type="date" id="dFuDate"></div>
+                <div class="field"><label>Reason</label><input type="text" id="dFuReason" placeholder="e.g., Lab results review"></div>
+              </div>
+              <button class="btn-sub" onclick="schedFU()">Schedule Follow-up</button>
+            </div>
+            <button class="btn-del" onclick="archiveRec()" style="margin-top:10px;">Archive this record</button>
+          </div>
+          <div id="dHistEmpty" class="empty">
+            <div class="ei">📭</div><h3>No treated patients yet</h3><p>Patients admitted by nurses will appear here.</p>
+          </div>
+        </div>
+        <div id="pf" class="hidden">
+          <div id="fuList"></div>
+          <div id="dFUEmpty" class="empty">
+            <div class="ei">📅</div><h3>No follow-ups scheduled</h3><p>Schedule from the patient history tab.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- JS — ORDER MATTERS -->
+<script src="js/utils.js"></script>
+<script src="js/email.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/patient.js"></script>
+<script src="js/nurse.js"></script>
+<script src="js/doctor.js"></script>
+
+</body>
+</html>
