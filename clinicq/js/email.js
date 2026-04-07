@@ -5,11 +5,11 @@
    https://www.emailjs.com (free tier: 200/month)
    ============================================= */
 
-const EMAILJS_PUBLIC_KEY         = 'YOUR_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID         = 'YOUR_SERVICE_ID';
-const EMAILJS_TEMPLATE_OTP       = 'YOUR_OTP_TEMPLATE_ID';
-const EMAILJS_TEMPLATE_BOOKING   = 'YOUR_BOOKING_TEMPLATE_ID';
-const EMAILJS_TEMPLATE_FOLLOWUP  = 'YOUR_FOLLOWUP_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY         = 'vaPgeoflInxdyljsK';
+const EMAILJS_SERVICE_ID         = 'service_5ej5b75';
+const EMAILJS_TEMPLATE_OTP       = 'template_7k0g0dr';
+const EMAILJS_TEMPLATE_BOOKING   = 'template_7k0g0dr';
+const EMAILJS_TEMPLATE_FOLLOWUP  = 'template_7k0g0dr';
 
 function initEmailJS() {
   if (typeof emailjs === 'undefined') {
