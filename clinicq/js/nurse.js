@@ -4,7 +4,16 @@
    cancel patients, stats
    ============================================= */
 
-function initNurseDashboard() { renderNurseQueue(); }
+let nurseRefreshInterval = null;
+
+function initNurseDashboard() {
+  renderNurseQueue();
+  // Auto-refresh every 3 seconds to catch new patient bookings
+  if (nurseRefreshInterval) clearInterval(nurseRefreshInterval);
+  nurseRefreshInterval = setInterval(() => {
+    renderNurseQueue();
+  }, 3000);
+}
 
 function updateNurseStats() {
   document.getElementById('ns_wait').textContent  = queue.length;
