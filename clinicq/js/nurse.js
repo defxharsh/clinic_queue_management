@@ -4,7 +4,11 @@
    cancel patients, stats
    ============================================= */
 
-function initNurseDashboard() { renderNurseQueue(); }
+function initNurseDashboard() {
+  renderNurseQueue();
+  // ✅ Auto-refresh every 3s — picks up new patients booked in other tabs
+  startAutoRefresh(renderNurseQueue);
+}
 
 function updateNurseStats() {
   document.getElementById('ns_wait').textContent  = queue.length;
@@ -46,30 +50,52 @@ function renderNurseQueue() {
 }
 
 window.admitPatient = function(idx) {
-  const patient = queue.splice(idx, 1)[0];
-  const doc     = DOCTORS.find(d => d.id === patient.docId);
+  // Re-read fresh from localStorage before admitting (avoid stale index)
+  queue = JSON.parse(localStorage.getItem(LS_QUEUE)) || [];
 
-  treatedHistory.push({
-    name:      patient.name,
-    email:     patient.email,
-    sym:       patient.sym,
-    doctor:    doc ? doc.name : 'Unknown',
-    spec:      doc ? doc.spec : '',
-    priority:  patient.priority,
-    treatedAt: new Date().toLocaleString()
+  const patient = queue.splice(idx, 1)[0];
+  if (!patient) { toast('Patient not found — queue may have changed.', 'error'); return; }
+
+  const doc = DOCTORS.find(d => d.id === patient.docId);
+
+  // ✅ Goes to doctor's waiting room first — NOT directly to treatedHistory
+  admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+  admittedPatients.push({
+    name:       patient.name,
+    email:      patient.email,
+    sym:        patient.sym,
+    docId:      patient.docId,
+    doctor:     doc ? doc.name : 'Unknown',
+    spec:       doc ? doc.spec : '',
+    priority:   patient.priority,
+    admittedAt: new Date().toLocaleString()
   });
 
   admittedCount++;
   queue.forEach((q, i) => q.qno = i + 1);
+
+  saveQueue();
+  saveAdmitted();
+  saveCounts();
+
   renderNurseQueue();
   toast(`✓ ${patient.name} admitted to ${doc ? doc.name : 'doctor'}.`, 'success');
 };
 
 window.cancelPatient = function(idx) {
-  const name = queue[idx].name;
+  // Re-read fresh from localStorage
+  queue = JSON.parse(localStorage.getItem(LS_QUEUE)) || [];
+
+  const name = queue[idx]?.name;
+  if (!name) { toast('Patient not found — queue may have changed.', 'error'); return; }
   if (!confirm(`Cancel appointment for ${name}?`)) return;
+
   queue.splice(idx, 1);
   queue.forEach((q, i) => q.qno = i + 1);
+
+  // ✅ Save updated queue
+  saveQueue();
+
   renderNurseQueue();
   toast(`Appointment for ${name} cancelled.`, 'info');
 };

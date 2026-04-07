@@ -1,21 +1,125 @@
 /* =============================================
    Clinic Q— | doctor.js
-   Doctor dashboard — patient history,
-   follow-up scheduling, archive, email notify
+   Doctor dashboard — admitted patients waiting,
+   treat/skip, patient history, follow-ups, archive
    ============================================= */
 
 function initDoctorDashboard() {
+  admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+  treatedHistory   = JSON.parse(localStorage.getItem(LS_HISTORY))  || [];
   updateDoctorStats();
+  renderAdmittedPatients();
   fillHistorySelect();
   renderFollowupList();
+  startAutoRefresh(() => {
+    updateDoctorStats();
+    renderAdmittedPatients();
+    fillHistorySelect();
+  });
 }
 
 function updateDoctorStats() {
   document.getElementById('ds_treated').textContent = treatedHistory.length;
-  document.getElementById('ds_fu').textContent       = followups.length;
-  document.getElementById('ds_arch').textContent     = archivedCount;
+  document.getElementById('ds_fu').textContent      = followups.length;
+  document.getElementById('ds_arch').textContent    = archivedCount;
 }
 
+// ─── ADMITTED PATIENTS (nurse sent these) ─────
+function renderAdmittedPatients() {
+  const container = document.getElementById('admittedList');
+  const emptyEl   = document.getElementById('admittedEmpty');
+  if (!container) return;
+
+  admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+
+  if (admittedPatients.length === 0) {
+    container.innerHTML = '';
+    if (emptyEl) emptyEl.classList.remove('hidden');
+    return;
+  }
+
+  if (emptyEl) emptyEl.classList.add('hidden');
+  container.innerHTML = admittedPatients.map((p, i) => `
+    <div class="admitted-card" style="
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;
+      justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--teal-light);
+          display:flex;align-items:center;justify-content:center;font-weight:700;
+          font-size:1rem;color:var(--teal);">${initials(p.name)}</div>
+        <div>
+          <div style="font-weight:700;font-size:0.97rem;">
+            ${p.name}
+            <span class="badge ${p.priority === 'High' ? 'b-red' : 'b-green'}" style="font-size:0.68rem;margin-left:6px;">${p.priority}</span>
+          </div>
+          <div style="font-size:0.78rem;color:var(--muted);">👨‍⚕️ ${p.doctor} &nbsp;·&nbsp; ${p.spec}</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">🕐 Admitted: ${p.admittedAt}</div>
+          <div style="font-size:0.82rem;margin-top:4px;"><strong>Symptoms:</strong> ${p.sym}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn-admit" onclick="markTreated(${i})" style="padding:7px 16px;">✓ Treated</button>
+        <button class="btn-del"   onclick="markNotTreated(${i})" style="padding:7px 16px;">✗ Not Treated</button>
+      </div>
+    </div>`).join('');
+}
+
+// ─── DOCTOR MARKS TREATED ─────────────────────
+window.markTreated = function(idx) {
+  admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+  const patient = admittedPatients.splice(idx, 1)[0];
+  if (!patient) return;
+
+  treatedHistory = JSON.parse(localStorage.getItem(LS_HISTORY)) || [];
+  treatedHistory.push({
+    name:      patient.name,
+    email:     patient.email,
+    sym:       patient.sym,
+    doctor:    patient.doctor,
+    spec:      patient.spec,
+    priority:  patient.priority,
+    treatedAt: new Date().toLocaleString()
+  });
+
+  saveAdmitted();
+  saveHistory();
+
+  renderAdmittedPatients();
+  fillHistorySelect();
+  updateDoctorStats();
+  toast(`✓ ${patient.name} marked as Treated — added to history.`, 'success');
+};
+
+// ─── DOCTOR MARKS NOT TREATED ─────────────────
+window.markNotTreated = function(idx) {
+  admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+  const patient = admittedPatients.splice(idx, 1)[0];
+  if (!patient) return;
+
+  queue = JSON.parse(localStorage.getItem(LS_QUEUE)) || [];
+  queue.push({
+    name:        patient.name,
+    email:       patient.email,
+    sym:         patient.sym,
+    docId:       patient.docId,
+    priority:    patient.priority,
+    time:        timeNow(),
+    date:        todayStr(),
+    _insertTime: Date.now(),
+    _uid:        Date.now() + Math.random()
+  });
+  queue.forEach((q, i) => q.qno = i + 1);
+
+  saveQueue();
+  saveAdmitted();
+
+  renderAdmittedPatients();
+  updateDoctorStats();
+  toast(`${patient.name} sent back to queue.`, 'info');
+};
+
+// ─── TABS ─────────────────────────────────────
 function docTab(tab) {
   document.getElementById('th').classList.toggle('active', tab === 'h');
   document.getElementById('tf').classList.toggle('active', tab === 'f');
@@ -24,11 +128,13 @@ function docTab(tab) {
   if (tab === 'h') fillHistorySelect(); else renderFollowupList();
 }
 
+// ─── PATIENT HISTORY SELECT ───────────────────
 function fillHistorySelect() {
   const sel     = document.getElementById('dHistSel');
   const detail  = document.getElementById('dDetail');
   const emptyEl = document.getElementById('dHistEmpty');
 
+  treatedHistory = JSON.parse(localStorage.getItem(LS_HISTORY)) || [];
   sel.innerHTML = '<option value="">-- Select patient --</option>';
 
   if (treatedHistory.length === 0) {
@@ -85,7 +191,7 @@ async function schedFU() {
   const date   = document.getElementById('dFuDate').value;
   const reason = document.getElementById('dFuReason').value.trim();
 
-  if (!date)   { toast('Please select a follow-up date.', 'error');   return; }
+  if (!date)   { toast('Please select a follow-up date.', 'error');    return; }
   if (!reason) { toast('Please enter a reason for follow-up.', 'error'); return; }
 
   const patient   = treatedHistory[selectedHistIdx];
@@ -105,7 +211,6 @@ async function schedFU() {
   document.getElementById('dFuReason').value = '';
   toast(`Follow-up scheduled for ${patient.name} on ${dateLabel}.`, 'success');
 
-  // Send follow-up email
   if (patient.email) {
     try {
       await sendFollowUpEmail(patient.email, patient.name, patient.doctor, dateLabel, reason);
@@ -122,6 +227,10 @@ function archiveRec() {
   if (!confirm(`Archive record for ${name}?`)) return;
   treatedHistory.splice(selectedHistIdx, 1);
   archivedCount++;
+
+  saveHistory();
+  saveCounts();
+
   selectedHistIdx = -1;
   document.getElementById('dDetail').classList.add('hidden');
   fillHistorySelect();

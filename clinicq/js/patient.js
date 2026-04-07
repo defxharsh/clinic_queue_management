@@ -1,8 +1,7 @@
 /* =============================================
    Clinic Q— | patient.js
    Patient dashboard — booking form, doctor
-   availability, email confirmation, fixed
-   high-priority queue position display
+   availability, email confirmation
    ============================================= */
 
 // ─── INIT ────────────────────────────────────
@@ -11,6 +10,11 @@ function initPatientDashboard() {
   fillDoctorSelect();
   renderDocGrid('pDocGrid');
   prefillIfLoggedIn();
+  startAutoRefresh(() => {
+    updatePatientStats();
+    fillDoctorSelect();
+    renderDocGrid('pDocGrid');
+  });
 }
 
 // ─── PRE-FILL for logged-in patients ─────────
@@ -33,6 +37,7 @@ function updatePatientStats() {
 // ─── DOCTOR SELECT ────────────────────────────
 function fillDoctorSelect() {
   const sel = document.getElementById('pDoc');
+  const prevValue = sel.value; // ✅ preserve current selection before rebuild
   sel.innerHTML = '<option value="">-- Choose a doctor --</option>';
   DOCTORS.forEach(doc => {
     const count = queue.filter(q => q.docId === doc.id).length;
@@ -41,6 +46,7 @@ function fillDoctorSelect() {
       ${doc.name} — ${doc.spec}${full ? ' (Full)' : ''}
     </option>`;
   });
+  if (prevValue) sel.value = prevValue; // ✅ restore selection after rebuild
   sel.onchange = updateDoctorStatus;
 }
 
@@ -66,10 +72,9 @@ function sortQueue() {
   queue.sort((a, b) => {
     const aHigh = a.priority === 'High' ? 0 : 1;
     const bHigh = b.priority === 'High' ? 0 : 1;
-    if (aHigh !== bHigh) return aHigh - bHigh; // High comes first
-    return a._insertTime - b._insertTime;       // Then by arrival time
+    if (aHigh !== bHigh) return aHigh - bHigh;
+    return a._insertTime - b._insertTime;
   });
-  // Re-assign qno after sort
   queue.forEach((p, i) => p.qno = i + 1);
 }
 
@@ -94,7 +99,7 @@ async function bookAppointment() {
     return;
   }
 
-  // Build entry with unique ID and insert timestamp for stable sorting
+  // Build entry
   const uid = Date.now() + Math.random();
   const newEntry = {
     _uid: uid,
@@ -105,14 +110,14 @@ async function bookAppointment() {
   };
 
   queue.push(newEntry);
-
-  // Sort queue — High priority goes to top, Normal stays in order
   sortQueue();
 
-  // Find real position using unique ID
+  // ✅ Save to localStorage so nurse/doctor tabs see it
+  saveQueue();
+
   const realPosition = queue.findIndex(q => q._uid === uid) + 1;
 
-  // Clear form fields (keep name/email for logged-in patients)
+  // Clear form
   if (currentRole !== 'patient') {
     document.getElementById('pName').value  = '';
     document.getElementById('pEmail').value = '';
@@ -122,7 +127,6 @@ async function bookAppointment() {
   document.getElementById('pDocStatus').textContent = 'Select a doctor to see availability';
   document.getElementById('pPriority').value = 'Normal';
 
-  // Update UI
   updatePatientStats();
   renderDocGrid('pDocGrid');
   fillDoctorSelect();
@@ -133,7 +137,6 @@ async function bookAppointment() {
     'success'
   );
 
-  // Send email confirmation
   if (sendEmail) {
     try {
       await sendBookingEmail(newEntry, realPosition, doc.name, doc.spec);

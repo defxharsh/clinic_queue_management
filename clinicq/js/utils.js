@@ -11,23 +11,42 @@ const DOCTORS = [
   { id:5, name:'Dr. Khan',   spec:'General Medicine', max:5 }
 ];
 
-// Global state
-let queue = [
-  { qno:1, name:'Olivia Chen',  email:'olivia@example.com', sym:'Chest discomfort and shortness of breath', docId:1, priority:'High',   time:'10:15 AM', date: new Date().toLocaleDateString() },
-  { qno:2, name:'James Miller', email:'james@example.com',  sym:'Persistent lower back pain',               docId:3, priority:'Normal', time:'10:45 AM', date: new Date().toLocaleDateString() }
-];
+// ─── localStorage KEYS ────────────────────────
+const LS_QUEUE    = 'clinicq_queue';
+const LS_HISTORY  = 'clinicq_history';
+const LS_COUNTS   = 'clinicq_counts';
+const LS_ADMITTED = 'clinicq_admitted'; // ✅ nurse admits → doctor sees here first
 
-let treatedHistory = [
-  { name:'Ethan Wu', email:'ethan@example.com', sym:'Routine annual checkup', doctor:'Dr. Khan', spec:'General Medicine', priority:'Normal', treatedAt: new Date().toLocaleString() }
-];
+// ─── LOAD from localStorage (no hardcoded data) ─
+let queue            = JSON.parse(localStorage.getItem(LS_QUEUE))    || [];
+let treatedHistory   = JSON.parse(localStorage.getItem(LS_HISTORY))  || [];
+let admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
 
-let followups     = [];
-let archivedCount = 0;
-let admittedCount = 0;
+const _counts      = JSON.parse(localStorage.getItem(LS_COUNTS)) || {};
+let archivedCount  = _counts.archived  || 0;
+let admittedCount  = _counts.admitted  || 0;
 
-let currentRole = null;
-let currentUser = null;
+let followups       = [];
+let currentRole     = null;
+let currentUser     = null;
 let selectedHistIdx = -1;
+
+// ─── SAVE helpers ─────────────────────────────
+function saveQueue() {
+  localStorage.setItem(LS_QUEUE, JSON.stringify(queue));
+}
+
+function saveHistory() {
+  localStorage.setItem(LS_HISTORY, JSON.stringify(treatedHistory));
+}
+
+function saveAdmitted() {
+  localStorage.setItem(LS_ADMITTED, JSON.stringify(admittedPatients));
+}
+
+function saveCounts() {
+  localStorage.setItem(LS_COUNTS, JSON.stringify({ archived: archivedCount, admitted: admittedCount }));
+}
 
 // ─── DOCTOR GRID ──────────────────────────────
 function renderDocGrid(containerId) {
@@ -63,4 +82,18 @@ function toast(msg, type = 'success') {
   el.className   = `show ${type}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.className = ''; }, 3600);
+}
+
+// ─── AUTO-REFRESH every 3 seconds ─────────────
+// Reloads queue & history from localStorage so all open tabs stay in sync
+function startAutoRefresh(refreshFn) {
+  setInterval(() => {
+    queue            = JSON.parse(localStorage.getItem(LS_QUEUE))    || [];
+    treatedHistory   = JSON.parse(localStorage.getItem(LS_HISTORY))  || [];
+    admittedPatients = JSON.parse(localStorage.getItem(LS_ADMITTED)) || [];
+    const c = JSON.parse(localStorage.getItem(LS_COUNTS)) || {};
+    admittedCount  = c.admitted  || 0;
+    archivedCount  = c.archived  || 0;
+    if (typeof refreshFn === 'function') refreshFn();
+  }, 3000);
 }
