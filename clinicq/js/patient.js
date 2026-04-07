@@ -127,6 +127,9 @@ async function bookAppointment() {
   renderDocGrid('pDocGrid');
   fillDoctorSelect();
 
+  // If nurse is also viewing, refresh their queue immediately
+  if (currentRole === 'nurse') renderNurseQueue();
+
   const estWait = realPosition * 7;
   toast(
     `✓ Booked! You are #${realPosition} in queue.${priority === 'High' ? ' 🔴 High priority — moved to top!' : ''} Est. wait: ~${estWait} min.`,
