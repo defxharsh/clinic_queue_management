@@ -12,14 +12,9 @@ const DOCTORS = [
 ];
 
 // Global state
-let queue = [
-  { qno:1, name:'Olivia Chen',  email:'olivia@example.com', sym:'Chest discomfort and shortness of breath', docId:1, priority:'High',   time:'10:15 AM', date: new Date().toLocaleDateString() },
-  { qno:2, name:'James Miller', email:'james@example.com',  sym:'Persistent lower back pain',               docId:3, priority:'Normal', time:'10:45 AM', date: new Date().toLocaleDateString() }
-];
+let queue = [];
 
-let treatedHistory = [
-  { name:'Ethan Wu', email:'ethan@example.com', sym:'Routine annual checkup', doctor:'Dr. Khan', spec:'General Medicine', priority:'Normal', treatedAt: new Date().toLocaleString() }
-];
+let treatedHistory = [];
 
 let followups     = [];
 let archivedCount = 0;
