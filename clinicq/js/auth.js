@@ -143,9 +143,6 @@ function attemptRegister() {
   document.getElementById('loginPass').value  = '';
 }
 
-// ─── GUEST ────────────────────────────────────
-function continueAsGuest() { launchApp('guest', null); }
-
 // ─── FORGOT PASSWORD — 3 STEPS ────────────────
 
 function showForgotStep(step) {
@@ -263,7 +260,6 @@ function launchApp(role, user) {
 
   const config = {
     patient: { text:'Patient', cls:'rp-patient', label: user ? `👤 ${user.name}` : '', init: initPatientDashboard, dash:'dPatient' },
-    guest:   { text:'Guest',   cls:'rp-guest',   label: '',                              init: initPatientDashboard, dash:'dPatient' },
     nurse:   { text:'Nurse',   cls:'rp-nurse',   label: '🩺 Staff',                      init: initNurseDashboard,   dash:'dNurse'   },
     doctor:  { text:'Doctor',  cls:'rp-doctor',  label: '👨‍⚕️ Staff',                     init: initDoctorDashboard,  dash:'dDoctor'  }
   };
@@ -283,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('staffLoginBtn').addEventListener('click', attemptLogin);
   document.getElementById('registerBtn').addEventListener('click', attemptRegister);
-  document.getElementById('patientGuestBtn').addEventListener('click', continueAsGuest);
   document.getElementById('exitBtn').addEventListener('click', () => location.reload());
 
   // Enter key shortcuts
