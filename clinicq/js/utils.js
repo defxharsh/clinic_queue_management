@@ -53,7 +53,8 @@ function renderDocGrid(containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = DOCTORS.map(doc => {
-    const count = queue.filter(q => q.docId === doc.id).length;
+    // ✅ Only count admitted patients — queue wale abhi doctor ke paas gaye nahi
+    const count = admittedPatients.filter(p => p.docId === doc.id).length;
     const pct   = Math.round((count / doc.max) * 100);
     const full  = count >= doc.max;
     return `<div class="doc-card">
